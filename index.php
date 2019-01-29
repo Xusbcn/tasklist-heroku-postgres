@@ -1,5 +1,15 @@
 <?php
-    $pdo = new PDO("mysql:host=localhost;dbname=task;charset=utf8","root","");
+   $db = parse_url(getenv("DATABASE_URL"));
+
+$pdo = new PDO("pgsql:" . sprintf(
+    "host=%s;port=%s;user=%s;password=%s;dbname=%s",
+    $db["host"],
+    $db["port"],
+    $db["user"],
+    $db["pass"],
+    ltrim($db["path"], "/")
+));
+
 
     if(isset($_POST['submit']) ){
         $name = $_POST['name'];
@@ -34,6 +44,7 @@
         <therad><th>Task</th><th></th></therad>
         <tbody>
 <?php
+
     $sth = $pdo->prepare("SELECT * FROM tasks ORDER BY id DESC");
     $sth->execute();
     
@@ -56,3 +67,4 @@
     </table>
 </body>
 </html>
+
