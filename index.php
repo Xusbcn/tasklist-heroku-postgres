@@ -1,70 +1,73 @@
-<?php
-   $db = parse_url(getenv("DATABASE_URL"));
-
-$pdo = new PDO("pgsql:" . sprintf(
-    "host=%s;port=%s;user=%s;password=%s;dbname=%s",
-    $db["host"],
-    $db["port"],
-    $db["user"],
-    $db["pass"],
-    ltrim($db["path"], "/")
-));
-
-
-    if(isset($_POST['submit']) ){
-        $name = $_POST['name'];
-        $sth = $pdo->prepare("INSERT INTO tasks (name) VALUES (:name)");
-        $sth->bindValue(':name', $name, PDO::PARAM_STR);
-        $sth->execute();
-    }elseif(isset($_POST['delete'])){
-        $id = $_POST['id'];
-        $sth = $pdo->prepare("delete from tasks where id = :id");
-        $sth->bindValue(':id', $id, PDO::PARAM_INT);
-        $sth->execute();
-    }
-?>
-
-<!DOCTYPE HTML>
-<html lang="ja">
+<!DOCTYPE html>
+<html>
 <head>
-    <title>Todo List</title>
-    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
-    <link rel="stylesheet" href="//cdn.rawgit.com/necolas/normalize.css/master/normalize.css">
-    <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
+    <meta charset="utf-8">
+    <title></title>
 </head>
-
-<body class="container">
-    <h1>Todo List</h1>
-    <form method="post" action="">
-        <input type="text" name="name" value="">
-        <input type="submit" name="submit" value="Add">
-    </form>
-    <h2>Current Todos</h2>
-    <table class="table table-striped">
-        <therad><th>Task</th><th></th></therad>
-        <tbody>
-<?php
-
-    $sth = $pdo->prepare("SELECT * FROM tasks ORDER BY id DESC");
-    $sth->execute();
+<body>
     
-    foreach($sth as $row) {
-?>
-            <tr>
-                <td><?= htmlspecialchars($row['name']) ?></td>
-                <td>
-                    <form method="POST">
-                        <button type="submit" name="delete">Delete</button>
-                        <input type="hidden" name="id" value="<?= $row['id'] ?>">
-                        <input type="hidden" name="delete" value="true">
-                    </form>
-                </td>
-            </tr>
-<?php
-    }
-?>
-        </tbody>
-    </table>
+    <h1>Tasklist</h1>
+    
+    <form method="POST" action="index.php">
+        <label>Nova tasca:</label>
+        <input type="text" name="introducir">
+        <button>Añadir tasca</button>
+    </form>
+
+    <?php 
+    $db = parse_url(getenv("DATABASE_URL"));
+    $pdo = new PDO("pgsql:" . sprintf(
+        "host=%s;port=%s;user=%s;password=%s;dbname=%s",
+        $db["host"],
+        $db["port"],
+        $db["user"],
+        $db["pass"],
+        ltrim($db["path"], "/")
+    ));
+    if(isset($_GET['hecho'])) {
+                $value = $_GET['hecho'];
+                $cambiar = $pdo->exec("update tasks set pendientes=true where id = '$value'");
+            }
+            if(isset($_GET['sinHacer'])) {
+                $value = $_GET['sinHacer'];
+                $cambiar = $pdo->exec("update tasks set pendientes=false where id = '$value'");
+            }
+            if(isset($_GET['borrar'])) {
+                $value = $_GET['borrar'];
+                $borrar = $pdo->exec("delete from tasks where id = '$value'");
+            }
+            if (isset($_POST["introducir"])) {
+                $value = $_POST["introducir"];
+                $query = $pdo->prepare("insert into taskss (lista_tareas, pendientes) values ('$value',false)");
+                $query->execute();
+            }
+            echo "<br><br>";
+            $query = $pdo->prepare("select * FROM tasks");
+            $query->execute();
+            $query2 = $pdo->prepare("select * FROM tasks");
+            $query2->execute();
+            echo "<b>Cosas pendientes</b> <br>";
+            foreach ($query as $row) {
+                if ($row['pendientes'] == 0) {
+                    $idprimaria = $row['id'];
+                    echo $row['lista_tareas'] ."\t"."<a href='?hecho=$idprimaria'>Hecho</a>"."\t"."<a href='?borrar=$idprimaria'>Borrar</a>". "<br>";
+                }
+              }
+            echo "<br><br>";
+            echo "<b>Cosas no pendientes</b> <br>";
+            foreach ($query2 as $row) {
+                if ($row['pendientes'] == 1) {
+                    $idprimaria = $row['id'];
+                    echo $row['lista_tareas'] ."\t"."<a href='?sinHacer=$idprimaria'>Sin hacer</a>"."\t"."<a href='?borrar=$idprimaria'>Borrar</a>". "<br>";
+                }
+            }
+    //comprovo errors:
+      $e= $query->errorInfo();
+      if ($e[0]!='00000') {
+        echo "\nPDO::errorInfo():\n";
+        die("Error accedint a dades: " . $e[2]);
+      }
+     ?>
+
 </body>
 </html>
-
