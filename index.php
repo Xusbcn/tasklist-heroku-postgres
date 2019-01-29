@@ -38,7 +38,7 @@
             }
             if (isset($_POST["introducir"])) {
                 $value = $_POST["introducir"];
-                $query = $pdo->prepare("insert into taskss (lista_tareas, pendientes) values ('$value',false)");
+                $query = $pdo->prepare("insert into tasks (lista_tareas, pendientes) values ('$value',false)");
                 $query->execute();
             }
             echo "<br><br>";
